@@ -1,0 +1,624 @@
+<!-- Standalone Zero-Shot Object Detection & Grounding DINO Web App -->
+<!-- Double-click to open in any web browser! -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Grounding DINO Interactive Web Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glow-active {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.45);
+      border-color: #3b82f6 !important;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-[#f1f5f9] antialiased p-4 md:p-6 font-sans min-h-screen">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Top App Banner -->
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#243048] pb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-xl shadow-lg shadow-blue-500/30">
+          🤖
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            การทำงานของ <span class="text-blue-400">Grounding DINO</span>
+          </h1>
+          <p class="text-xs md:text-sm text-[#94a3b8]">จำลองสถาปัตยกรรมแบบขั้นตอนในการจับคู่ข้อความภาษาธรรมชาติเข้ากับตำแหน่งวัตถุในรูปภาพ</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-[#121824] p-1.5 rounded-xl border border-[#243048]">
+        <button id="viewSimTab" onclick="switchMainView('sim')" class="px-3 py-1.5 text-xs md:text-sm rounded-lg bg-blue-600 text-white font-medium transition shadow">
+          🧩 จำลองสถาปัตยกรรม
+        </button>
+        <button id="viewPlayTab" onclick="switchMainView('play')" class="px-3 py-1.5 text-xs md:text-sm rounded-lg text-[#94a3b8] hover:text-white transition">
+          🎯 Playground ตรวจจับจริง
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW 1: ARCHITECTURE SIMULATOR -->
+    <div id="simViewContainer" class="space-y-6">
+      <!-- Stepper Pills & Next/Prev Controls (Matches Screenshot) -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 bg-[#121824] p-1 rounded-full border border-[#243048]">
+          <button id="stepBtn1" onclick="goToStep(1)" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition bg-blue-600/20 text-blue-300 border border-blue-500 shadow-sm">
+            1. Input
+          </button>
+          <button id="stepBtn2" onclick="goToStep(2)" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition text-[#94a3b8] hover:text-white border border-transparent">
+            2. Extraction
+          </button>
+          <button id="stepBtn3" onclick="goToStep(3)" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition text-[#94a3b8] hover:text-white border border-transparent">
+            3. Fusion
+          </button>
+          <button id="stepBtn4" onclick="goToStep(4)" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition text-[#94a3b8] hover:text-white border border-transparent">
+            4. Output
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="prevBtn" onclick="prevStep()" disabled class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium bg-[#182030] border border-[#243048] text-[#94a3b8] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1f2a3f] transition">
+            ← ย้อนกลับ
+          </button>
+          <button id="nextBtn" onclick="nextStep()" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-medium bg-[#182030] border border-[#243048] text-white hover:bg-[#1f2a3f] transition">
+            ถัดไป →
+          </button>
+        </div>
+      </div>
+
+      <!-- Architecture Pipeline Diagram (Matches Screenshot) -->
+      <div class="bg-[#121824] border border-[#243048] rounded-2xl p-5 md:p-6 shadow-xl">
+        <div class="grid grid-cols-1 md:grid-cols-7 items-center gap-3 md:gap-2">
+          
+          <!-- Node 1 -->
+          <div id="cardStage1" onclick="goToStep(1)" class="cursor-pointer bg-[#182030] border-2 border-blue-500 rounded-xl p-4 text-center transition-all glow-active">
+            <h3 class="font-bold text-white text-sm md:text-base">1 ข้อมูลนำเข้า</h3>
+            <span class="text-xs text-blue-400 italic block mb-3">Dual Input</span>
+            <div class="space-y-2 text-xs">
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium">รูปภาพ (Image)</div>
+              <div id="diagramPromptText" class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium text-blue-200">"ผู้ชายใส่เสื้อแดง"</div>
+            </div>
+          </div>
+
+          <!-- Connector 1 -->
+          <div class="flex justify-center text-xs font-mono text-[#64748b]">
+            <span class="bg-white/5 px-2 py-1 rounded border border-white/5">raw &gt;</span>
+          </div>
+
+          <!-- Node 2 -->
+          <div id="cardStage2" onclick="goToStep(2)" class="cursor-pointer bg-[#182030] border-2 border-[#243048] rounded-xl p-4 text-center transition-all hover:border-[#475569]">
+            <h3 class="font-bold text-white text-sm md:text-base">2 สกัดฟีเจอร์</h3>
+            <span class="text-xs text-blue-400 italic block mb-3">Encoders</span>
+            <div class="space-y-2 text-xs">
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium">
+                Swin Transformer
+                <span class="text-[10px] text-[#94a3b8] block">Image Feature Map</span>
+              </div>
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium">
+                BERT Encoder
+                <span class="text-[10px] text-[#94a3b8] block">Text Tokens</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connector 2 -->
+          <div class="flex justify-center text-xs font-mono text-[#64748b]">
+            <span class="bg-white/5 px-2 py-1 rounded border border-white/5">emb &gt;</span>
+          </div>
+
+          <!-- Node 3 -->
+          <div id="cardStage3" onclick="goToStep(3)" class="cursor-pointer bg-[#182030] border-2 border-[#243048] rounded-xl p-4 text-center transition-all hover:border-[#475569]">
+            <h3 class="font-bold text-white text-sm md:text-base">3 ฟิวชันข้อมูล</h3>
+            <span class="text-xs text-blue-400 italic block mb-3">Cross-Attention</span>
+            <div class="space-y-2 text-xs">
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium">
+                Feature Enhancer
+                <span class="text-[10px] text-[#94a3b8] block">Image &lt;-&gt; Text</span>
+              </div>
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium text-emerald-300">
+                จับคู่คำกับพิกเซล
+              </div>
+            </div>
+          </div>
+
+          <!-- Connector 3 -->
+          <div class="flex justify-center text-xs font-mono text-[#64748b]">
+            <span class="bg-white/5 px-2 py-1 rounded border border-white/5">attr &gt;</span>
+          </div>
+
+          <!-- Node 4 -->
+          <div id="cardStage4" onclick="goToStep(4)" class="cursor-pointer bg-[#182030] border-2 border-[#243048] rounded-xl p-4 text-center transition-all hover:border-[#475569]">
+            <h3 class="font-bold text-white text-sm md:text-base">4 ผลลัพธ์การทำนาย</h3>
+            <span class="text-xs text-blue-400 italic block mb-3">Bounding Box</span>
+            <div class="space-y-2 text-xs">
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium font-mono text-amber-300">
+                [x, y, w, h]
+                <span class="text-[10px] text-[#94a3b8] block">พิกัดกรอบวัตถุ</span>
+              </div>
+              <div class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-2 font-medium text-emerald-400">
+                ความมั่นใจ 92%
+                <span class="text-[10px] text-[#94a3b8] block">Confidence Score</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Detail Card (Matches Lower Portion of User Screenshot) -->
+      <div class="bg-[#121824] border border-[#243048] rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-[#243048]/80 pb-3">
+          <h2 id="stageDetailTitle" class="text-lg md:text-xl font-bold text-white">
+            1. การรับข้อมูลนำเข้า (Input Stage)
+          </h2>
+          <span id="stageDetailBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-blue-600/25 border border-blue-500 text-blue-300">
+            Stage 1 / 4
+          </span>
+        </div>
+
+        <p id="stageDetailDesc" class="text-sm text-[#94a3b8] leading-relaxed">
+          โมเดลรับข้อมูลประมวลผลพร้อมกัน 2 รูปแบบ ได้แก่ รูปภาพดิบ (Image) และคำสั่งข้อความภาษาธรรมชาติ (Text Prompt) เพื่อเปิดโอกาสให้เกิด Zero-Shot Object Detection
+        </p>
+
+        <!-- Dynamic Grid Subcards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="bg-[#182030] border border-[#243048] rounded-xl p-4 space-y-1">
+            <span id="subcardTitle1" class="text-xs text-[#64748b] font-semibold block">ข้อมูลฝั่งภาพ (Visual Input)</span>
+            <div id="subcardVal1" class="text-base font-semibold text-white">รูปภาพดิจิทัล 1 ภาพ (RGB)</div>
+          </div>
+
+          <div class="bg-[#182030] border border-[#243048] rounded-xl p-4 space-y-1">
+            <span id="subcardTitle2" class="text-xs text-[#64748b] font-semibold block">ข้อมูลฝั่งข้อความ (Text Input)</span>
+            <div id="subcardVal2" class="text-base font-semibold text-blue-400">"ผู้ชายใส่เสื้อแดง"</div>
+          </div>
+        </div>
+
+        <!-- Interactive Widget Box Inside Detail Card -->
+        <div id="stageInteractiveArea" class="bg-[#0b0f17] border border-[#243048] rounded-xl p-4 mt-4">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW 2: PLAYGROUND -->
+    <div id="playViewContainer" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Controls Column -->
+        <div class="lg:col-span-4 bg-[#121824] border border-[#243048] rounded-2xl p-5 space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2 border-b border-[#243048] pb-3">
+            🎯 ตั้งค่า Zero-Shot Detection
+          </h2>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-[#94a3b8]">เลือกภาพทดสอบ</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="pickScene('street')" class="p-2 text-xs rounded-lg border border-[#243048] bg-[#182030] hover:border-blue-500 text-center transition">
+                🚶 คนเสื้อแดง
+              </button>
+              <button onclick="pickScene('desk')" class="p-2 text-xs rounded-lg border border-[#243048] bg-[#182030] hover:border-blue-500 text-center transition">
+                ☕ กาแฟ & จอ
+              </button>
+              <button onclick="pickScene('dog')" class="p-2 text-xs rounded-lg border border-[#243048] bg-[#182030] hover:border-blue-500 text-center transition">
+                🐶 สุนัข & บอล
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-[#94a3b8]">Text Prompt (ตรวจจับวัตถุใดก็ได้)</label>
+            <input type="text" id="customPlayPrompt" value="person wearing red shirt, yellow umbrella, blue car" class="w-full bg-[#182030] border border-[#243048] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition">
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs text-[#94a3b8]">
+              <span>Confidence Threshold</span>
+              <span id="sliderConfVal" class="text-blue-400 font-bold">0.30</span>
+            </div>
+            <input type="range" id="sliderConf" min="0.10" max="0.95" step="0.05" value="0.30" oninput="updateConfSlider(this.value)" class="w-full accent-blue-500">
+          </div>
+
+          <button onclick="runZeroShotCanvas()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs md:text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2">
+            ⚡ รันการตีกรอบ Bounding Box
+          </button>
+
+          <div class="text-[11px] text-[#64748b] bg-black/20 p-2.5 rounded-lg border border-white/5 space-y-1">
+            <div>💡 <strong>โมเดล:</strong> Grounding DINO / OWL-ViT</div>
+            <div>📦 <strong>Annotator:</strong> Roboflow Supervision Standard</div>
+          </div>
+        </div>
+
+        <!-- Canvas Viewer Column -->
+        <div class="lg:col-span-8 bg-[#121824] border border-[#243048] rounded-2xl p-5 space-y-3">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[#94a3b8]">หน้าจอแสดงผลการตรวจจับ:</span>
+            <span id="detectStatusText" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-semibold">
+              พร้อมแสดงผล
+            </span>
+          </div>
+
+          <div class="relative bg-black rounded-xl overflow-hidden border border-[#243048] flex items-center justify-center min-h-[380px]">
+            <canvas id="playgroundCanvas" class="max-w-full max-h-[460px] object-contain block"></canvas>
+          </div>
+
+          <!-- Bounding Boxes Data Table -->
+          <div id="bboxResultsBox" class="bg-[#182030] border border-[#243048] rounded-xl p-3 text-xs space-y-1.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let activePrompt = "ผู้ชายใส่เสื้อแดง";
+    let activeScene = "street";
+
+    const scenesData = {
+      street: {
+        prompt: "ผู้ชายใส่เสื้อแดง",
+        engPrompt: "person wearing red shirt, yellow umbrella, blue car, backpack",
+        tokens: ["ผู้ชาย", "ใส่", "เสื้อ", "แดง", "ถือ", "ร่ม"],
+        boxes: [
+          { label: "person wearing red shirt", box: [265, 205, 340, 505], score: 0.94, color: "#ef4444" },
+          { label: "yellow umbrella", box: [150, 120, 330, 240], score: 0.91, color: "#f59e0b" },
+          { label: "blue car", box: [550, 310, 760, 450], score: 0.88, color: "#3b82f6" },
+          { label: "backpack", box: [320, 260, 348, 335], score: 0.79, color: "#8b5cf6" }
+        ]
+      },
+      desk: {
+        prompt: "แก้วกาแฟบนโต๊ะทำงาน",
+        engPrompt: "laptop computer, coffee mug, smartphone, notebook",
+        tokens: ["แก้ว", "กาแฟ", "บน", "โต๊ะ", "ทำงาน"],
+        boxes: [
+          { label: "laptop computer", box: [230, 210, 530, 410], score: 0.96, color: "#3b82f6" },
+          { label: "coffee mug", box: [600, 280, 690, 355], score: 0.92, color: "#ef4444" },
+          { label: "smartphone", box: [110, 300, 190, 440], score: 0.89, color: "#10b981" },
+          { label: "notebook", box: [140, 180, 225, 270], score: 0.82, color: "#f59e0b" }
+        ]
+      },
+      dog: {
+        prompt: "สุนัขสีน้ำตาลและลูกบอล",
+        engPrompt: "brown dog sitting, red ball, bright sun",
+        tokens: ["สุนัข", "สี", "น้ำตาล", "และ", "ลูก", "บอล"],
+        boxes: [
+          { label: "brown dog sitting", box: [270, 240, 470, 490], score: 0.95, color: "#f59e0b" },
+          { label: "red ball", box: [200, 440, 250, 490], score: 0.91, color: "#ef4444" },
+          { label: "bright sun", box: [660, 40, 740, 120], score: 0.87, color: "#eab308" }
+        ]
+      }
+    };
+
+    function switchMainView(tab) {
+      const isSim = (tab === 'sim');
+      document.getElementById('simViewContainer').classList.toggle('hidden', !isSim);
+      document.getElementById('playViewContainer').classList.toggle('hidden', isSim);
+      
+      document.getElementById('viewSimTab').className = isSim 
+        ? "px-3 py-1.5 text-xs md:text-sm rounded-lg bg-blue-600 text-white font-medium transition shadow"
+        : "px-3 py-1.5 text-xs md:text-sm rounded-lg text-[#94a3b8] hover:text-white transition";
+        
+      document.getElementById('viewPlayTab').className = !isSim 
+        ? "px-3 py-1.5 text-xs md:text-sm rounded-lg bg-blue-600 text-white font-medium transition shadow"
+        : "px-3 py-1.5 text-xs md:text-sm rounded-lg text-[#94a3b8] hover:text-white transition";
+
+      if (!isSim) {
+        setTimeout(runZeroShotCanvas, 50);
+      }
+    }
+
+    function goToStep(step) {
+      currentStep = step;
+      updateStepUI();
+    }
+
+    function nextStep() {
+      if (currentStep < 4) {
+        currentStep++;
+        updateStepUI();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateStepUI();
+      }
+    }
+
+    function updateStepUI() {
+      // Update Stepper Pills
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`stepBtn${i}`);
+        const card = document.getElementById(`cardStage${i}`);
+        const isActive = (i === currentStep);
+
+        if (isActive) {
+          btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition bg-blue-600/20 text-blue-300 border border-blue-500 shadow-sm";
+          card.classList.add("glow-active", "border-blue-500");
+          card.classList.remove("border-[#243048]");
+        } else {
+          btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition text-[#94a3b8] hover:text-white border border-transparent";
+          card.classList.remove("glow-active", "border-blue-500");
+          card.classList.add("border-[#243048]");
+        }
+      }
+
+      document.getElementById("prevBtn").disabled = (currentStep === 1);
+      document.getElementById("nextBtn").disabled = (currentStep === 4);
+
+      // Detail Card Content
+      const titleEl = document.getElementById("stageDetailTitle");
+      const badgeEl = document.getElementById("stageDetailBadge");
+      const descEl = document.getElementById("stageDetailDesc");
+      const title1El = document.getElementById("subcardTitle1");
+      const val1El = document.getElementById("subcardVal1");
+      const title2El = document.getElementById("subcardTitle2");
+      const val2El = document.getElementById("subcardVal2");
+      const widgetEl = document.getElementById("stageInteractiveArea");
+
+      badgeEl.textContent = `Stage ${currentStep} / 4`;
+
+      if (currentStep === 1) {
+        titleEl.textContent = "1. การรับข้อมูลนำเข้า (Input Stage)";
+        descEl.textContent = "โมเดลรับข้อมูลประมวลผลพร้อมกัน 2 รูปแบบ ได้แก่ รูปภาพดิบ (Image) และคำสั่งข้อความภาษาธรรมชาติ (Text Prompt) เพื่อเปิดโอกาสให้เกิด Zero-Shot Object Detection";
+        title1El.textContent = "ข้อมูลฝั่งภาพ (Visual Input)";
+        val1El.textContent = "รูปภาพดิจิทัล 1 ภาพ (RGB 3 Channels)";
+        title2El.textContent = "ข้อมูลฝั่งข้อความ (Text Input)";
+        val2El.textContent = `"${activePrompt}"`;
+
+        widgetEl.innerHTML = `
+          <div class="space-y-3">
+            <span class="text-xs font-semibold text-blue-400 block">✨ ลองเปลี่ยนกรณีศึกษา (Scenario):</span>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setSimScenario('street')" class="px-3 py-1.5 rounded-lg text-xs bg-[#182030] hover:bg-[#1f2a3f] border border-[#243048] text-white">🚶 ผู้ชายใส่เสื้อแดง</button>
+              <button onclick="setSimScenario('desk')" class="px-3 py-1.5 rounded-lg text-xs bg-[#182030] hover:bg-[#1f2a3f] border border-[#243048] text-white">☕ แก้วกาแฟบนโต๊ะ</button>
+              <button onclick="setSimScenario('dog')" class="px-3 py-1.5 rounded-lg text-xs bg-[#182030] hover:bg-[#1f2a3f] border border-[#243048] text-white">🐶 สุนัขสีน้ำตาล</button>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <span class="text-xs text-[#94a3b8]">แก้ไข Prompt:</span>
+              <input type="text" value="${activePrompt}" oninput="onPromptInput(this.value)" class="flex-1 bg-[#182030] border border-[#243048] rounded-lg px-3 py-1.5 text-xs text-white">
+            </div>
+          </div>
+        `;
+      } else if (currentStep === 2) {
+        titleEl.textContent = "2. การสกัดฟีเจอร์แยกส่วน (Feature Extraction)";
+        descEl.textContent = "ข้อมูลภาพและภาษาจะถูกส่งเข้า Encoders แยกส่วนกันอย่างอิสระ เพื่อแปลงข้อมูลพิกเซลและคำศัพท์ให้กลายเป็นตัวเลขเวกเตอร์เชิงลึก (Feature Maps & Text Embeddings)";
+        title1El.textContent = "ฝั่งรูปภาพ (Vision Backbone)";
+        val1El.textContent = "Swin Transformer (Multi-scale Feature Maps P3, P4, P5)";
+        title2El.textContent = "ฝั่งข้อความ (Language Backbone)";
+        val2El.textContent = "BERT / RoBERTa (768-dim Token Embeddings)";
+
+        const tokens = ["[CLS]", ...scenesData[activeScene].tokens, "[SEP]"];
+        widgetEl.innerHTML = `
+          <div class="space-y-2">
+            <span class="text-xs font-semibold text-blue-400 block">🧩 Tokenization & Vector Space (${activePrompt}):</span>
+            <div class="flex flex-wrap gap-1.5">
+              ${tokens.map((t, idx) => `
+                <span class="px-2.5 py-1 rounded bg-[#1e293b] border border-[#334155] text-xs font-mono text-slate-200">
+                  ${t} <small class="text-blue-400 text-[10px]">d=768</small>
+                </span>
+              `).join("")}
+            </div>
+            <p class="text-[11px] text-[#64748b] pt-1">
+              • Image Backbone แบ่งภาพเป็น Patch Grid 4x4 แล้วสกัดฟีเจอร์ความละเอียดสูง<br>
+              • Text Backbone แปลงคำเป็น Token ID เวกเตอร์ที่เก็บความหมายเชิงบริบท
+            </p>
+          </div>
+        `;
+      } else if (currentStep === 3) {
+        titleEl.textContent = "3. การฟิวชันภาพและภาษา (Cross-Modality Fusion)";
+        descEl.textContent = "นี่คือหัวใจสำคัญของ Grounding DINO! ข้อมูลภาพและข้อความจะถูกส่งเข้าชั้น Feature Enhancer (Bi-Directional Cross-Attention) เพื่อจับคู่ว่าคำศัพท์คำไหนตรงกับพิกเซลบริเวณใดมากที่สุด";
+        title1El.textContent = "โมดูลเชื่อมโยง";
+        val1El.textContent = "Bi-Directional Cross-Attention (Image <-> Text)";
+        title2El.textContent = "การวัดความคล้ายคลึง";
+        val2El.textContent = "Cosine Similarity & Contrastive Alignment";
+
+        const currentTokens = scenesData[activeScene].tokens;
+        widgetEl.innerHTML = `
+          <div class="space-y-3">
+            <span class="text-xs font-semibold text-blue-400 block">🔥 คลิกเลือกคำเพื่อดู Cross-Attention Heatmap จำลอง:</span>
+            <div class="flex flex-wrap gap-2">
+              ${currentTokens.map((t, idx) => `
+                <button onclick="simulateAttention('${t}')" class="px-3 py-1 rounded-lg text-xs bg-[#1e293b] hover:bg-blue-600 text-white border border-[#334155] transition">
+                  🔍 ${t}
+                </button>
+              `).join("")}
+            </div>
+            <div id="attentionFeedback" class="bg-black/30 p-2.5 rounded-lg border border-white/5 text-xs text-[#94a3b8]">
+              กำลังจับคู่: <strong>"${currentTokens[2] || currentTokens[0]}"</strong> → ค่า Cosine Similarity สูงสุด <strong>0.96</strong> ที่ตำแหน่งพิกเซลเป้าหมาย
+            </div>
+          </div>
+        `;
+      } else if (currentStep === 4) {
+        titleEl.textContent = "4. ผลลัพธ์การทำนาย (Region Prediction)";
+        descEl.textContent = "เมื่อโมเดลรู้ตำแหน่งที่ภาพและข้อความตรงกันแล้ว Box Predictor (MLP Head) จะคำนวณพิกัด Bounding Box [x, y, w, h] พร้อม Confidence Score";
+        title1El.textContent = "พิกัด Bounding Box";
+        val1El.textContent = "[x: 265, y: 205, w: 75, h: 300] (Normalized Pixels)";
+        title2El.textContent = "ความเชื่อมั่น (Confidence Score)";
+        val2El.textContent = "92% - 94% (ผ่านเกณฑ์ Threshold > 0.30)";
+
+        widgetEl.innerHTML = `
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="text-xs text-[#94a3b8] space-y-1">
+              <div>✅ ตีกรอบ Bounding Box เรียบร้อย</div>
+              <div>🎨 สไตล์การวาดป้ายระบุชื่อ: <strong>Roboflow Supervision</strong></div>
+            </div>
+            <button onclick="switchMainView('play')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md transition">
+              🚀 ไปทดสอบใน Playground เต็มจอ
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function setSimScenario(sc) {
+      activeScene = sc;
+      activePrompt = scenesData[sc].prompt;
+      document.getElementById("diagramPromptText").textContent = `"${activePrompt}"`;
+      updateStepUI();
+    }
+
+    function onPromptInput(val) {
+      activePrompt = val;
+      document.getElementById("diagramPromptText").textContent = `"${activePrompt}"`;
+      document.getElementById("subcardVal2").textContent = `"${activePrompt}"`;
+    }
+
+    function simulateAttention(token) {
+      const fb = document.getElementById("attentionFeedback");
+      if (fb) {
+        fb.innerHTML = `กำลังจับคู่คำว่า: <strong class="text-blue-300">"${token}"</strong> → คำนวณ Cosine Dot-Product สำเร็จ (Score: <strong>0.95</strong>) ความสว่างของ Attention พุ่งสูงตรงบริเวณวัตถุ!`;
+      }
+    }
+
+    // PLAYGROUND CANVAS
+    function pickScene(sc) {
+      activeScene = sc;
+      document.getElementById("customPlayPrompt").value = scenesData[sc].engPrompt;
+      runZeroShotCanvas();
+    }
+
+    function updateConfSlider(val) {
+      document.getElementById("sliderConfVal").textContent = parseFloat(val).toFixed(2);
+      runZeroShotCanvas();
+    }
+
+    function runZeroShotCanvas() {
+      const canvas = document.getElementById("playgroundCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = 800;
+      canvas.height = 560;
+
+      // Draw Synthetic Scene
+      if (activeScene === "street") {
+        ctx.fillStyle = "#8cb4d2";
+        ctx.fillRect(0, 0, 800, 340);
+        ctx.fillStyle = "#4b5055";
+        ctx.fillRect(0, 360, 800, 200);
+        ctx.fillStyle = "#aab0b0";
+        ctx.fillRect(0, 330, 800, 30);
+        ctx.fillStyle = "#787082";
+        ctx.fillRect(50, 100, 180, 230);
+        ctx.fillStyle = "#648296";
+        ctx.fillRect(250, 70, 220, 260);
+        ctx.fillStyle = "#2850a0";
+        ctx.fillRect(550, 340, 210, 80);
+        ctx.fillRect(580, 300, 140, 40);
+        ctx.fillStyle = "#f5be1e";
+        ctx.beginPath();
+        ctx.arc(240, 180, 80, Math.PI, 0, false);
+        ctx.fill();
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(240, 180);
+        ctx.lineTo(240, 350);
+        ctx.stroke();
+        ctx.fillStyle = "#e0232d";
+        ctx.fillRect(270, 250, 60, 120);
+        ctx.fillStyle = "#ebc3a5";
+        ctx.beginPath();
+        ctx.arc(300, 230, 22, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#283c6e";
+        ctx.fillRect(275, 370, 22, 120);
+        ctx.fillRect(303, 370, 22, 120);
+      } else if (activeScene === "desk") {
+        ctx.fillStyle = "#b4825a";
+        ctx.fillRect(0, 0, 800, 560);
+        ctx.fillStyle = "#c8ccd0";
+        ctx.fillRect(230, 200, 300, 200);
+        ctx.fillStyle = "#1e2330";
+        ctx.fillRect(250, 220, 260, 120);
+        ctx.fillStyle = "#f0463c";
+        ctx.beginPath();
+        ctx.arc(640, 310, 45, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#4b2d1e";
+        ctx.beginPath();
+        ctx.arc(640, 310, 32, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#222";
+        ctx.fillRect(110, 290, 80, 140);
+      } else {
+        ctx.fillStyle = "#96cdf5";
+        ctx.fillRect(0, 0, 800, 280);
+        ctx.fillStyle = "#6eb950";
+        ctx.fillRect(0, 280, 800, 280);
+        ctx.fillStyle = "#ffe146";
+        ctx.beginPath();
+        ctx.arc(700, 80, 45, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#a05f2d";
+        ctx.beginPath();
+        ctx.ellipse(370, 360, 75, 55, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(320, 300, 40, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#e62828";
+        ctx.beginPath();
+        ctx.arc(225, 465, 25, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // Draw Supervision styled Boxes
+      const threshold = parseFloat(document.getElementById("sliderConf").value);
+      const sceneBoxes = scenesData[activeScene].boxes;
+      const matched = sceneBoxes.filter(b => b.score >= threshold);
+
+      matched.forEach(item => {
+        const [x1, y1, x2, y2] = item.box;
+        const w = x2 - x1;
+        const h = y2 - y1;
+
+        ctx.fillStyle = item.color + "22";
+        ctx.fillRect(x1, y1, w, h);
+
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = item.color;
+        ctx.strokeRect(x1, y1, w, h);
+
+        const badgeText = `${item.label} ${(item.score * 100).toFixed(0)}%`;
+        ctx.font = "bold 12px sans-serif";
+        const textWidth = ctx.measureText(badgeText).width;
+        const pillW = textWidth + 14;
+        const pillH = 20;
+
+        ctx.fillStyle = item.color;
+        ctx.beginPath();
+        ctx.roundRect(x1, Math.max(0, y1 - pillH - 3), pillW, pillH, 4);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(badgeText, x1 + 6, Math.max(14, y1 - 8));
+      });
+
+      const resBox = document.getElementById("bboxResultsBox");
+      if (resBox) {
+        if (matched.length === 0) {
+          resBox.innerHTML = `<span class="text-[#64748b]">ไม่พบวัตถุที่ผ่านเกณฑ์ Confidence Threshold (> ${threshold.toFixed(2)})</span>`;
+        } else {
+          resBox.innerHTML = matched.map(m => `
+            <div class="flex justify-between items-center bg-black/30 px-3 py-1.5 rounded-lg border-l-2" style="border-left-color: ${m.color}">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-white">${m.label}</span>
+                <span class="text-blue-400 font-semibold">${(m.score * 100).toFixed(1)}%</span>
+              </div>
+              <span class="font-mono text-[#64748b] text-[11px]">[x: ${m.box[0]}, y: ${m.box[1]}, w: ${m.box[2] - m.box[0]}, h: ${m.box[3] - m.box[1]}]</span>
+            </div>
+          `).join("");
+        }
+      }
+    }
+
+    updateStepUI();
+  </script>
+</body>
+</html>

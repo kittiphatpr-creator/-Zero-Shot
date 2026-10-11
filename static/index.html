@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zero-Shot AI & Multi-Domain Training Studio</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="brand-box">
+      <div class="brand-icon">
+        <i class="fa-solid fa-crosshairs"></i>
+      </div>
+      <div>
+        <div class="brand-title">Zero-Shot <span>AI Vision Studio</span></div>
+        <div class="brand-tagline">ค้นหาวัตถุในภาพด้วยภาษาธรรมชาติ & ระบบเทรนโมเดลเฉพาะทาง</div>
+      </div>
+    </div>
+
+    <!-- Right Header Controls -->
+    <div class="header-actions">
+      <!-- Model Mode Switcher -->
+      <div class="model-mode-pill">
+        <button id="modeZeroShotBtn" class="mode-btn active" onclick="switchModelMode('zero_shot')">
+          <i class="fa-solid fa-bolt"></i> <span>Zero-Shot (YOLO-World)</span>
+        </button>
+        <button id="modeCustomBtn" class="mode-btn" onclick="switchModelMode('custom')">
+          <i class="fa-solid fa-award"></i> <span>โมเดลที่เทรนแล้ว (Fine-Tuned)</span>
+        </button>
+      </div>
+
+      <!-- Training Studio Button -->
+      <button class="train-studio-btn" onclick="openTrainingModal()">
+        <i class="fa-solid fa-graduation-cap"></i> <span>ศูนย์การเทรน AI</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Layout -->
+  <main class="main-wrapper">
+    
+    <!-- Left Column: Inputs & Controls -->
+    <div class="control-card">
+      
+      <!-- Multi-Domain Selector -->
+      <div>
+        <div class="section-label">
+          <i class="fa-solid fa-layer-group"></i> เลือกหมวดหมู่ (Multi-Domain Selection)
+        </div>
+        <div class="domain-tabs" id="domainTabs">
+          <button class="domain-tab active" onclick="selectDomain('food')">
+            <span>🍳 อาหาร & เครื่องดื่ม</span>
+          </button>
+          <button class="domain-tab" onclick="selectDomain('fashion')">
+            <span>👕 แฟชั่น & สตรีท</span>
+          </button>
+          <button class="domain-tab" onclick="selectDomain('traffic')">
+            <span>🚗 การจราจร & รถยนต์</span>
+          </button>
+          <button class="domain-tab" onclick="selectDomain('workspace')">
+            <span>💻 โต๊ะทำงาน & ไอที</span>
+          </button>
+          <button class="domain-tab" onclick="selectDomain('animals')">
+            <span>🐶 สัตว์เลี้ยง & ธรรมชาติ</span>
+          </button>
+          <button class="domain-tab" onclick="selectDomain('popculture')">
+            <span>🎬 การ์ตูน & ภาพยนตร์</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 1: Upload or Select Image -->
+      <div>
+        <div class="section-label">
+          <i class="fa-solid fa-image"></i> 1. อัปโหลดรูปภาพ (Upload Image)
+        </div>
+        
+        <div class="upload-dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept="image/*">
+          <div class="upload-icon">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div class="upload-text">คลิกเพื่อเลือกภาพ หรือลากไฟล์มาวางที่นี่</div>
+          <div class="upload-hint">รองรับ JPG, PNG, WebP หรือกด Ctrl+V เพื่อวางรูปภาพ</div>
+        </div>
+
+        <!-- Sample Presets Grid -->
+        <div style="margin-top: 0.65rem;">
+          <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.35rem; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="fa-solid fa-wand-magic-sparkles" style="color: #60a5fa;"></i> ภาพตัวอย่างพร้อม Prompt ทันใจ:</span>
+          </div>
+          <div class="sample-bar" id="sampleBar">
+            <div class="sample-thumb" id="thumb-avengers" onclick="loadSamplePreset('avengers')">
+              <img src="/static/samples/avengers.jpg" alt="Avengers">
+              <span>Avengers</span>
+            </div>
+            <div class="sample-thumb" id="thumb-batman" onclick="loadSamplePreset('batman')">
+              <img src="/static/samples/batman_dc.jpg" alt="Batman">
+              <span>Batman</span>
+            </div>
+            <div class="sample-thumb" id="thumb-superman" onclick="loadSamplePreset('superman')">
+              <img src="/static/samples/superman_dc.jpg" alt="Superman">
+              <span>Superman</span>
+            </div>
+            <div class="sample-thumb" id="thumb-dc" onclick="loadSamplePreset('dc')">
+              <img src="/static/samples/dc_heroes.jpg" alt="Justice League">
+              <span>Justice League</span>
+            </div>
+            <div class="sample-thumb" id="thumb-salmon" onclick="loadSamplePreset('salmon')">
+              <img src="/static/samples/salmon_dish.jpg" alt="Salmon">
+              <span>แซลมอน</span>
+            </div>
+            <div class="sample-thumb" id="thumb-food" onclick="loadSamplePreset('food')">
+              <img src="/static/samples/thai_food.jpg" alt="Thai Food">
+              <span>ไข่ดาว</span>
+            </div>
+            <div class="sample-thumb" id="thumb-cat" onclick="loadSamplePreset('cat')">
+              <img src="/static/samples/cat_pet.jpg" alt="Cat">
+              <span>แมว</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Text Command / Prompt -->
+      <div>
+        <div class="section-label">
+          <i class="fa-solid fa-magnifying-glass"></i> 2. ป้อนสิ่งของที่ต้องการค้นหา (Prompt)
+        </div>
+        <textarea id="promptInput" class="prompt-box" placeholder="พิมพ์สิ่งของที่อยากหา เช่น ปลา, ข้าวโพด, ไข่ดาว หรือ laptop, car">ปลา, ข้าวโพด, จาน</textarea>
+        
+        <!-- Domain-Specific Quick Click Tags -->
+        <div class="quick-tags" id="quickTags">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Step 3: Confidence Slider -->
+      <div class="slider-wrapper">
+        <div class="slider-header">
+          <span><i class="fa-solid fa-sliders"></i> ระดับความมั่นใจ (Confidence Threshold)</span>
+          <span id="confDisplay" class="slider-val">25%</span>
+        </div>
+        <input type="range" id="confSlider" min="0.10" max="0.90" step="0.05" value="0.25" class="range-input">
+        <div class="conf-quick-btns">
+          <button type="button" class="quick-conf-btn" id="btnConf15" onclick="setConfidence(0.15)">ตรวจจับง่าย (15%)</button>
+          <button type="button" class="quick-conf-btn active" id="btnConf25" onclick="setConfidence(0.25)">มาตรฐาน (25%)</button>
+          <button type="button" class="quick-conf-btn" id="btnConf50" onclick="setConfidence(0.50)">มั่นใจสูง (50%)</button>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="detectBtn" class="detect-btn" onclick="startDetection()">
+        <i class="fa-solid fa-bolt"></i> ค้นหาและตีกรอบวัตถุ (Detect Objects)
+      </button>
+
+    </div>
+
+    <!-- Right Column: Visual Result Canvas & Stats -->
+    <div class="viewer-card">
+      
+      <!-- Top Status Bar -->
+      <div class="status-bar">
+        <div class="status-item">
+          <span style="color:var(--text-dim);">โหมดโมเดล:</span>
+          <span id="activeModelBadge" class="status-badge">⚡ Zero-Shot YOLO-World</span>
+        </div>
+        <div class="status-item">
+          <span style="color:var(--text-dim);">พบวัตถุ:</span>
+          <strong id="foundCount" style="color:#60a5fa; font-size:1rem;">0 รายการ</strong>
+        </div>
+        <div class="status-item">
+          <span style="color:var(--text-dim);">ความเร็ว:</span>
+          <span id="latencyDisplay" style="color:var(--text-muted); font-family:monospace;">~0 ms</span>
+        </div>
+      </div>
+
+      <!-- Image Canvas Viewport -->
+      <div class="canvas-holder">
+        <canvas id="resultCanvas"></canvas>
+      </div>
+
+      <!-- Bottom Bar: Download & List -->
+      <div class="results-bottom-bar">
+        <div style="font-size:0.9rem; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:0.4rem;">
+          <i class="fa-solid fa-list-check" style="color:#60a5fa;"></i> รายการวัตถุที่ตรวจพบ
+        </div>
+        <button id="downloadBtn" class="download-btn" onclick="downloadImage()">
+          <i class="fa-solid fa-download"></i> ดาวน์โหลดรูปภาพที่ตีกรอบ
+        </button>
+      </div>
+
+      <!-- Detections Pill List -->
+      <div id="detectionsList" class="detections-list">
+        <div style="color:var(--text-dim); font-size:0.85rem; padding:1rem; text-align:center;">
+          กดปุ่ม "ค้นหาและตีกรอบวัตถุ" เพื่อดูรายการและพิกัดของวัตถุ
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Training Studio Modal -->
+  <div class="modal-overlay" id="trainingModal">
+    <div class="modal-container">
+      
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-graduation-cap"></i> ศูนย์การฝึกฝนและเทรนโมเดล AI (Fine-Tuning Studio)
+        </div>
+        <button class="modal-close" onclick="closeTrainingModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- 3-Step Pipeline Explanation -->
+      <div class="pipeline-steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-title">รวบรวมรูปภาพ</div>
+          <div class="step-desc">ใส่รูปภาพที่ต้องการสอน AI ลงในโฟลเดอร์ เช่น ภาพอาหาร เสื้อผ้า ยานพาหนะ</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-title">Auto-Labeling</div>
+          <div class="step-desc">ระบบใช้ Zero-Shot AI ตีกรอบวัตถุให้อัตโนมัติ แปลงเป็น YOLO format โดยไม่ต้องวาดกรอบเอง</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-title">PyTorch Fine-Tuning</div>
+          <div class="step-desc">ฝึกฝนโครงข่ายประสาทเทียมด้วย Ultralytics บันทึกค่าน้ำหนักเป็น best.pt พร้อมใช้งาน</div>
+        </div>
+      </div>
+
+      <!-- Interactive Training Form -->
+      <div style="display:flex; flex-direction:column; gap:0.85rem;">
+        
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-folder-open" style="color:#a855f7;"></i> โฟลเดอร์รูปภาพสำหรับฝึกฝน (Image Directory)
+          </label>
+          <input type="text" id="trainSourceDir" class="form-input" value="static/samples">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-tags" style="color:#a855f7;"></i> คลาสที่ต้องการสอนโมเดล (Classes to Train - คั่นด้วยจุลภาค)
+          </label>
+          <input type="text" id="trainClasses" class="form-input" value="ไข่ดาว, ข้าว, เสื้อ, กางเกง, รถยนต์, แล็ปท็อป, สุนัข">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+          <div class="form-group">
+            <label class="form-label">จำนวนรอบการเทรน (Epochs)</label>
+            <input type="number" id="trainEpochs" class="form-input" value="3" min="1" max="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">โมเดลเริ่มต้น (Base Architecture)</label>
+            <input type="text" class="form-input" value="YOLOv8 Nano (CPU Optimized)" readonly style="opacity:0.75;">
+          </div>
+        </div>
+
+        <!-- Train Button -->
+        <button id="startTrainBtn" class="train-studio-btn" style="justify-content:center; padding:0.85rem; font-size:0.95rem; border-radius:12px;" onclick="triggerTraining()">
+          <i class="fa-solid fa-rocket"></i> เริ่มสร้างชุดข้อมูลและเทรนโมเดล (Start Training)
+        </button>
+
+      </div>
+
+      <!-- Training Progress & Logs -->
+      <div class="progress-card">
+        <div class="progress-header">
+          <span id="trainStatusLabel" style="color:#c084fc;">สถานะ: พร้อมเริ่มต้น</span>
+          <span id="trainProgressLabel" style="color:#60a5fa; font-family:monospace;">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="trainProgressFill"></div>
+        </div>
+        <div class="log-terminal" id="trainLogTerminal">
+[พร้อมทำงาน] รอคำสั่งเพื่อเริ่มต้นกระบวนการ Auto-Labeling และ Fine-Tuning...
+        </div>
+      </div>
+
+      <!-- Terminal Command Snippet -->
+      <div>
+        <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:0.35rem;">
+          หรือรันคำสั่งโดยตรงผ่าน Terminal / PowerShell:
+        </div>
+        <div class="cli-box">
+          <span id="cliSnippet">python train_custom_dataset.py --images static/samples --classes "ไข่ดาว, ข้าว, รถยนต์" --epochs 5</span>
+          <button class="copy-btn" onclick="copyCliCommand()">
+            <i class="fa-solid fa-copy"></i> คัดลอก
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
