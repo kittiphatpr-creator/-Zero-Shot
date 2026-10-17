@@ -1,3 +1,13 @@
+---
+title: Zero Shot AI Vision Studio
+emoji: 👁️
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Zero-Shot Object Detection & Grounding DINO Studio 🚀
 
 โปรเจกต์จำลองและทดสอบการทำงานของ **Zero-Shot (Open-Vocabulary) Object Detection** พร้อมระบบจำลองสถาปัตยกรรม **Grounding DINO** แบบเจาะลึก 4 ขั้นตอน (Step-by-Step Interactive Simulator) และระบบ Playground ตรวจจับวัตถุจริงด้วย Text Prompt ภาษาธรรมชาติ

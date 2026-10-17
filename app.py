@@ -149,10 +149,23 @@ def start_train():
 def get_train_status():
     return jsonify(TRAINING_STATE)
 
+def get_local_ip():
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    local_ip = get_local_ip()
     print(f"\n=======================================================")
-    print(f"🚀 High-Accuracy Zero-Shot & Training Studio Running!")
-    print(f"👉 Open in browser: http://127.0.0.1:{port}")
+    print(f"🚀 High-Accuracy Zero-Shot & Training Studio Running 24/7!")
+    print(f"👉 Local Access:   http://localhost:{port}")
+    print(f"👉 Network/Mobile: http://{local_ip}:{port}")
     print(f"=======================================================\n")
-    app.run(host="127.0.0.1", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
